@@ -1,3 +1,14 @@
+function for_healpy_order(l, m::Integer, lmax::Integer)
+    a = 1
+    if m != 0
+        for i in 1:m
+            a += lmax + 2 - i
+        end
+    end
+    a += l - m
+    return a
+end
+
 function unique_theta_num(num, nside)
     # This function calculates the unique theta number range for a given pixel number and nside parameter.
     #
