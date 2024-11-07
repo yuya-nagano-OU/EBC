@@ -20,7 +20,6 @@ function unique_theta_num(num, nside)
     n = num-1
     a1 = 4
     d = 4
-    1
     if num < nside + 1
         start = 1/2*n*(2*a1+(n-1)*d)+1
         stop  = 1/2*num*(2*a1+(num-1)*d)
