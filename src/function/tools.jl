@@ -1,4 +1,23 @@
 function unique_theta_num(num, NSIDE)
+# This function calculates the start and stop indices for unique theta values
+# based on the given pixel number (num) and NSIDE parameter.
+#
+# Arguments:
+# - num: The pixel number for which the unique theta indices are to be calculated.
+# - NSIDE: The NSIDE parameter that determines the resolution of the map.
+#
+# Returns:
+# - A tuple containing the start and stop indices as integers.
+#
+# The function works by first calculating the total number of pixels (NPIX) using
+# the nside2npix function. It then determines the start and stop indices based on
+# the value of num in relation to NSIDE. The calculations are divided into three
+# cases:
+# 1. When num is less than NSIDE + 1.
+# 2. When num is less than 3 * NSIDE + 1.
+# 3. When num is greater than or equal to 3 * NSIDE + 1.
+#
+# Each case uses a different formula to calculate the start and stop indices.
     NPIX = nside2npix(NSIDE)
     n = num-1
     a1 = 4
