@@ -13,7 +13,7 @@ function for_healpy_order(l, m::Integer, lmax::Integer)
     return a
 end
 
-function unique_theta_num(num, nside)
+function unique_theta_num(num, cp)
     # This function calculates the unique theta number range for a given pixel number and nside parameter.
     #
     # # Arguments
@@ -31,28 +31,29 @@ function unique_theta_num(num, nside)
     # 3. When `num` is greater than or equal to `3nside + 1`.
     #
     # The function returns the start and stop indices as integers.
-    npix = nside2npix(nside)
+    npix = nside2npix(cp.nside)
     n = num-1
     a1 = 4
     d = 4
-    if num < nside + 1
+    if num < cp.nside + 1
         start = 1/2*n*(2*a1+(n-1)*d)+1
         stop  = 1/2*num*(2*a1+(num-1)*d)
-    elseif num < 3nside+1
-        n_2 = num - nside
-        n = nside - 1
-        start = 1/2*nside*(2*a1+(nside-1)*d) + 4*(n_2-1)*nside + 1
-        stop = 1/2*nside*(2*a1+(nside-1)*d) + 4*(n_2)*nside 
+    elseif num < 3cp.nside+1
+        n_2 = num - cp.nside
+        n = cp.nside - 1
+        start = 1/2*cp.nside*(2*a1+(cp.nside-1)*d) + 4*(n_2-1)*cp.nside + 1
+        stop = 1/2*cp.nside*(2*a1+(cp.nside-1)*d) + 4*(n_2)*cp.nside 
     else
-        n_2 = 4nside-1 - num
+        n_2 = 4cp.nside-1 - num
         start = npix - 1/2*(n_2+1)*(2*a1+(n_2)*d) +1
         stop = npix - 1/2*(n_2)*(2*a1+(n_2-1)*d)
     end
     return Int(start), Int(stop)
 end
 
-function unique_theta_val(nside, res)
-    npix = nside2npix(nside)
+function unique_theta_val(cp)
+    npix = nside2npix(cp.nside)
+    res = Resolution(cp.nside)
     θ= zeros(npix)
     for i in 1:npix
         ang = pix2angRing(res, i)

@@ -11,7 +11,7 @@ function gen_ConvolutionParams(;
         lmax=3*nside-1,
         alm = [1.0+1im 1.0+1im;1.0+1im 1.0+1im],
         blm = [1.0+1im 1.0+1im;1.0+1im 1.0+1im],
-        l_range = [0,0]
+        l_range = [0,lmax]
     )
     return ConvolutionParams(
         nside,
