@@ -5,6 +5,7 @@ mutable struct ConvolutionParams{I<:Int, MC<:Matrix{Complex{Float64}}, VI<:Vecto
     blm::MC
     l_range::VI
     ini_wignerd::AC
+    calc_wignerD::AC
 end
 
 function gen_ConvolutionParams(;
@@ -13,7 +14,8 @@ function gen_ConvolutionParams(;
         alm = [1.0+1im 1.0+1im;1.0+1im 1.0+1im],
         blm = [1.0+1im 1.0+1im;1.0+1im 1.0+1im],
         l_range = [0,lmax],
-        ini_wignerd = zeros(ComplexF64,l_range[2]-l_range[1]+1, 2l_range[2]+1,2l_range[2]+1)
+        ini_wignerd = zeros(ComplexF64,l_range[2]-l_range[1]+1, 2l_range[2]+1,2l_range[2]+1),
+        calc_wignerD = zeros(ComplexF64,l_range[2]-l_range[1]+1, 2l_range[2]+1,2l_range[2]+1)
     )
     return ConvolutionParams(
         nside,
@@ -21,6 +23,7 @@ function gen_ConvolutionParams(;
         alm,
         blm,
         l_range,
-        ini_wignerd
+        ini_wignerd,
+        calc_wignerD
     )
 end
