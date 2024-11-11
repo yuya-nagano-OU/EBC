@@ -1,6 +1,9 @@
+include("./function/convolver.jl")
 include("./function/rotaters.jl")
 include("./function/structures.jl")
 include("./function/tools.jl")
+include("./function/sph_functions.jl")
+
 
 
 export simple_rotater, swignerd_calc

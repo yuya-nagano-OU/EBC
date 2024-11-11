@@ -1,4 +1,61 @@
-mutable struct ConvolutionParams{I<:Int, MC<:Matrix{Complex{Float64}}, VI<:Vector{Int64}, AC<:Array{Complex{Float64}, 3}}
+mutable struct ConvolutionParams{I<:Int, MC<:Matrix{Complex{Float64}}, VI<:Vector{Int64}}
+    nside::I
+    lmax::I
+    alm::MC
+    blm::MC
+    beam_mmax::I
+    l_range::VI
+end
+
+function gen_ConvolutionParams(;
+        nside=12*128^2,
+        lmax=3*nside-1,
+        alm = [1.0+1im 1.0+1im;1.0+1im 1.0+1im],
+        blm = [1.0+1im 1.0+1im;1.0+1im 1.0+1im],
+        beam_mmax = 2,
+        l_range = [0,lmax]
+    )
+    return ConvolutionParams(
+        nside,
+        lmax,
+        alm,
+        blm,
+        beam_mmax,
+        l_range
+    )
+end
+
+mutable struct ConvolutionParams_pc{I<:Int, MC<:Matrix{Complex{Float64}}, VI<:Vector{Int64}, AC<:Array{ComplexF64,2}}
+    nside::I
+    lmax::I
+    alm::MC
+    blm::MC
+    beam_mmax::I
+    l_range::VI
+    ini_wignerd::AC
+end
+
+function gen_ConvolutionParams_pc(;
+        nside=12*128^2,
+        lmax=3*nside-1,
+        alm = [1.0+1im 1.0+1im;1.0+1im 1.0+1im],
+        blm = [1.0+1im 1.0+1im;1.0+1im 1.0+1im],
+        beam_mmax = 2,
+        l_range = [0,lmax],
+        ini_wignerd = zeros(ComplexF64, 3, 2*lmax+1)
+    )
+    return ConvolutionParams_pc(
+        nside,
+        lmax,
+        alm,
+        blm,
+        beam_mmax,
+        l_range, 
+        ini_wignerd
+    )
+end
+
+mutable struct ConvolutionParams_{I<:Int, MC<:Matrix{Complex{Float64}}, VI<:Vector{Int64}, AC<:Array{Complex{Float64}, 3}}
     nside::I
     lmax::I
     alm::MC
@@ -8,7 +65,7 @@ mutable struct ConvolutionParams{I<:Int, MC<:Matrix{Complex{Float64}}, VI<:Vecto
     calc_wignerD::AC
 end
 
-function gen_ConvolutionParams(;
+function gen_ConvolutionParams_(;
         nside=12*128^2,
         lmax=3*nside-1,
         alm = [1.0+1im 1.0+1im;1.0+1im 1.0+1im],
@@ -17,7 +74,7 @@ function gen_ConvolutionParams(;
         ini_wignerd = zeros(ComplexF64,l_range[2]-l_range[1]+1, 2l_range[2]+1,2l_range[2]+1),
         calc_wignerD = zeros(ComplexF64,l_range[2]-l_range[1]+1, 2l_range[2]+1,2l_range[2]+1)
     )
-    return ConvolutionParams(
+    return ConvolutionParams_(
         nside,
         lmax,
         alm,

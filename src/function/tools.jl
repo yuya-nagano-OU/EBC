@@ -1,5 +1,3 @@
-
-
 function alm_idx(l, m::Integer, lmax::Integer)
     return Int(m * (2 * lmax + 1 - m) // 2 + l)+1
 end
