@@ -47,14 +47,24 @@ function initialwignerds_array(cp, theta, path, initial_wignerd)
    return initial_wignerd
 end
 
-function get_pc_total_effective_wignerD(cp, wd_onz, initial_wignerd)
+function get_pc_total_effective_wignerD(cp, phi,  wd_onz, initial_wignerd)
     for l in 0:cp.lmax
         for m in -l:l
-            initial_wignerd[l+1][l+1+m,:] .*= exp(-1im*m*(calc_phi[1]))
-            initial_wignerd[l+1][l+1+m,:] .*= (wd_onz[1,cp.lmax+1-l:cp.lmax+1+l])
+            initial_wignerd[l+1][l+1+m,:] .*= exp(-1im*m*(phi))
+            initial_wignerd[l+1][l+1+m,:] .*= (wd_onz[cp.lmax+1-l:cp.lmax+1+l])
         end
     end
     return initial_wignerd
+end
+
+function get_pc_total_effective_wignerD(cp, phi,  wd_onz, initial_wignerd, convolve_wignerd)
+    for l in 0:cp.lmax
+        for m in -l:l
+            convolve_wignerd[l+1][l+1+m,:] .= exp(-1im*m*(phi)).*initial_wignerd[l+1][l+1+m,:]
+            convolve_wignerd[l+1][l+1+m,:] .= (wd_onz[cp.lmax+1-l:cp.lmax+1+l]).*convolve_wignerd[l+1][l+1+m,:]
+        end
+    end
+    return convolve_wignerd
 end
 
 function swignerd_calc(ell, theta, path)

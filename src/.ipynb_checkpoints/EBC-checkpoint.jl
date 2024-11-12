@@ -1,4 +1,5 @@
 include("./function/convolver.jl")
+include("./function/mapmaker.jl")
 include("./function/rotaters.jl")
 include("./function/structures.jl")
 include("./function/tools.jl")
