@@ -28,3 +28,30 @@ function eff_convolver_optimized(alm_new, blm_new, eff_wignerD, mmax)
     end
     return result_1 + (result_2 + result_3)/2
 end
+
+function eff_convolver_optimized(alm_new, blm_new, eff_wignerD)
+    result_1 = 0.0 + 0.0im 
+    result_2 = 0.0 + 0.0im
+    result_3 = 0.0 + 0.0im
+    for l in 0:cp.lmax
+        #print(l)
+        result_1 += transpose(alm_new[1][l+1][:])*conj(eff_wignerD[l+1][:,:]*blm_new[1][l+1][:])
+        result_2 += transpose(alm_new[2][l+1][:])*conj(eff_wignerD[l+1][:,:]*blm_new[2][l+1][:])
+        result_3 += transpose(alm_new[3][l+1][:])*conj(eff_wignerD[l+1][:,:]*blm_new[3][l+1][:])
+    end
+    return result_1 + (result_2 + result_3)/2
+end
+
+function eff_convolver_optimized_2(alm_new, blm_new, eff_wignerD)
+    result_1 = 0.0 + 0.0im 
+    result_2 = 0.0 + 0.0im
+    result_3 = 0.0 + 0.0im
+    @views for l in 0:cp.lmax
+        #@show l, length(blm_new[1][l+1][:]), length(eff_wignerD[:,:])
+        result_1 += transpose(alm_new[1][l+1])*conj.(eff_wignerD[l+1]*blm_new[1][l+1])
+        result_2 += transpose(alm_new[2][l+1])*conj.(eff_wignerD[l+1]*blm_new[2][l+1])
+        result_3 += transpose(alm_new[3][l+1])*conj.(eff_wignerD[l+1]*blm_new[3][l+1])
+    end
+    return result_1 .+ (result_2 .+ result_3)./2
+end
+
