@@ -1,3 +1,20 @@
+function truncate_alm(alm; lmax_in, lmax_out, mmax_out)
+    @show size_out = alm_idx(lmax_out,mmax_out,lmax_out)
+    alm_new = zeros(ComplexF64, 3, size_out)
+    for m in 0:mmax_out
+        idx_start_out = alm_idx(m,m,lmax_out)
+        idx_stop_out = alm_idx(lmax_out, m,lmax_out)
+        idx_start_in = alm_idx(m, m,lmax_in)
+        idx_stop_in = alm_idx(lmax_out, m, lmax_in)
+        
+        alm_new[1, idx_start_out:idx_stop_out] = alm[1, idx_start_in:idx_stop_in]
+        alm_new[2, idx_start_out:idx_stop_out] = alm[2, idx_start_in:idx_stop_in]
+        alm_new[3, idx_start_out:idx_stop_out] = alm[3, idx_start_in:idx_stop_in]
+    end
+    
+    return alm_new
+end
+
 function alm_idx(l, m::Integer, lmax::Integer)
     return Int(m * (2 * lmax + 1 - m) // 2 + l)+1
 end
@@ -60,4 +77,33 @@ function unique_theta_val(cp)
         θ[i] = ang[1]
     end
     return unique(θ)
+end
+
+function get_first_idx(start_pix, split)
+    upper = 1
+    idx_falcon = 0
+    while start_pix > upper
+        idx_falcon += 1
+        under   = Int(split * (idx_falcon - 1))
+        upper   = Int(split * idx_falcon)
+    end
+    if idx_falcon == 0
+        idx_falcon = 1
+    end
+    return idx_falcon
+end
+
+function pix2falcons_idx(target_pix, temp_idx,split)
+    falcon_idx = 1
+    under   = Int(split * (temp_idx - 1))
+    upper   = Int(split * temp_idx)
+    if target_pix > upper
+        temp_idx += 1
+        under   = Int(split * (temp_idx - 1))
+        upper   = Int(split * temp_idx)
+        falcon_idx = target_pix - under
+    else
+        falcon_idx = target_pix - under
+    end
+    return Int(falcon_idx), temp_idx
 end

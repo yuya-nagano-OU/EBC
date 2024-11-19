@@ -6,6 +6,7 @@ mutable struct ConvolutionParams{I<:Int, MC<:Matrix{Complex{Float64}}, VI<:Vecto
     beam_mmax::I
     l_range::VI
     HWP::Bl
+    realization::I
 end
 
 function gen_ConvolutionParams(;
@@ -15,7 +16,8 @@ function gen_ConvolutionParams(;
         blm = [1.0+1im 1.0+1im;1.0+1im 1.0+1im],
         beam_mmax = 2,
         l_range = [0,lmax],
-        HWP = false
+        HWP = false,
+        realization = 1
     )
     return ConvolutionParams(
         nside,
@@ -24,7 +26,8 @@ function gen_ConvolutionParams(;
         blm,
         beam_mmax,
         l_range,
-        HWP
+        HWP,
+        realization
     )
 end
 
