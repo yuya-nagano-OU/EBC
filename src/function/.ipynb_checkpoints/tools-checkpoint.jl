@@ -1,3 +1,10 @@
+function store_wignerd(l_start, l_stop, path)
+    for l in l_start:l_stop
+        w = WignerD.wignerd(l, pi/2)
+        npzwrite(path*"dmatrices=ell$l"*".npy", w)
+    end
+end
+
 function truncate_alm(alm; lmax_in, lmax_out, mmax_out)
     @show size_out = alm_idx(lmax_out,mmax_out,lmax_out)
     alm_new = zeros(ComplexF64, 3, size_out)
