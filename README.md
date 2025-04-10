@@ -1,1 +1,1 @@
-# Effective beam convolver
+# Effective Beam Convolver for CMB
