@@ -1,1 +1,1 @@
-# EBC
+# Effective beam convolver
