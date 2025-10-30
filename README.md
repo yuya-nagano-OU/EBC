@@ -1,1 +1,1 @@
-# Effective Beam Convolver for CMB
+# Effective Beam Convolver for CMB science
