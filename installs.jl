@@ -14,3 +14,5 @@ Pkg.add("StaticArrays")
 
 Pkg.add("NPZ")
 Pkg.add("BenchmarkTools")
+
+Pkg.add("Falcons")

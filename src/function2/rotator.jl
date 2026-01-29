@@ -1,0 +1,90 @@
+# --- basic rotation matrices (active, right-handed) ---
+Rz(α) = @SMatrix [cos(α) -sin(α) 0.0;
+                  sin(α)  cos(α) 0.0;
+                  0.0     0.0    1.0]
+
+Ry(β) = @SMatrix [ cos(β) 0.0 sin(β);
+                   0.0    1.0 0.0;
+                  -sin(β) 0.0 cos(β)]
+
+
+# ZYZ Euler rotation: R(α,β,γ) = Rz(α) * Ry(β) * Rz(γ)
+Rzyz(α, β, γ) = Rz(α) * Ry(β) * Rz(γ)
+
+# angle wrap to (-π, π]
+wrap_pm_pi(x) = mod(x + π, 2π) - π
+
+function euler_zyz_from_R(R::AbstractMatrix{<:Real}; eps::Real=1e-12)
+    #=
+    Extract ZYZ Euler angles (α,β,γ) from a 3×3 rotation matrix R
+    Input:
+        R   : 3x3 rotation matrix (real-valued, right-handed, active)
+        eps : threshold for detecting the singular cases β≈0 or β≈π
+    Return:
+        (α, β, γ) : ZYZ Euler angles in radians, with α and γ wrapped to (-π, π]
+    =#
+    # Clamp for numerical safety
+    cβ = clamp(R[3,3], -1.0, 1.0)
+    β = acos(cβ)
+
+    if abs(sin(β)) > eps
+        # Standard case
+        α = atan(R[2,3], R[1,3])          # atan2(y, x) in Julia is atan(y, x)
+        γ = atan(R[3,2], -R[3,1])
+        return (wrap_pm_pi(α), β, wrap_pm_pi(γ))
+    else
+        # Singular: β ≈ 0 or π
+        # If β≈0: R ≈ Rz(α+γ)
+        # If β≈π: R ≈ Rz(α-γ) * Ry(π)  (ambiguity remains)
+        # We fix α=0 and solve for γ from the top-left 2×2 block.
+        if cβ > 0  # β≈0
+            α = 0.0
+            γ = atan(R[2,1], R[1,1])      # angle of Rz(γ)
+            return (α, 0.0, wrap_pm_pi(γ))
+        else       # β≈π
+            α = 0.0
+            # For β=π, top-left 2×2 block ~ [-cosγ -sinγ; -sinγ cosγ] up to convention
+            # A stable choice:
+            γ = atan(-R[2,1], -R[1,1])
+            return (α, π, wrap_pm_pi(γ))
+        end
+    end
+end
+
+
+function second_euler_for_split(phi, theta, dphi, dtheta, psi; eps=1e-12)
+    #=
+    Given target Euler angles (phi+dphi, theta+dtheta, psi), split as
+    R_tgt = R(phi,theta,0) * R2, and return Euler angles of R2: (α2, β2, γ2).
+    Returns:
+        (α2, β2, γ2, R2).
+    =#
+    R1   = Rzyz(phi, theta, 0.0)
+    Rtgt = Rzyz(phi + dphi, theta + dtheta, psi)
+
+    # For rotation matrices: inverse = transpose
+    R2 = transpose(R1) * Rtgt
+
+    α2, β2, γ2 = euler_zyz_from_R(Matrix(R2); eps=eps)
+    return (α2, β2, γ2, Matrix(R2))
+end
+
+# --- optional: quick verification helper ---
+function check_split(phi, theta, dphi, dtheta, psi; eps=1e-12)
+    α2, β2, γ2, R2 = second_euler_for_split(phi, theta, dphi, dtheta, psi; eps=eps)
+    R1   = Matrix(Rzyz(phi, theta, 0.0))
+    Rtgt = Matrix(Rzyz(phi + dphi, theta + dtheta, psi))
+    Rrec = R1 * Matrix(Rzyz(α2, β2, γ2))
+    return maximum(abs.(Rtgt .- Rrec)), (α2, β2, γ2)
+end
+
+function second_euler(phi, theta, dphi, dtheta, psi; eps=1e-12)
+    R1   = Rzyz(phi, theta, 0.0)
+    Rtgt = Rzyz(phi + dphi, theta + dtheta, psi)
+
+    # For rotation matrices: inverse = transpose
+    R2 = transpose(R1) * Rtgt
+
+    α2, β2, γ2 = euler_zyz_from_R(Matrix(R2); eps=eps)
+    return (α2, β2, γ2)
+end
