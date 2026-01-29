@@ -88,3 +88,60 @@ function second_euler(phi, theta, dphi, dtheta, psi; eps=1e-12)
     α2, β2, γ2 = euler_zyz_from_R(Matrix(R2); eps=eps)
     return (α2, β2, γ2)
 end
+
+
+
+function WignerD_calculator!(result::AbstractMatrix{ComplexF64},
+                             d, ell::Int, phi, theta, psi;
+                             tmpB=nothing, w=nothing, p=nothing, q=nothing)
+
+    L = 2*ell + 1
+    @assert size(d,1) == L && size(d,2) == L
+    @assert size(result,1) == L && size(result,2) == L
+
+    # 作業配列（外から渡せば allocations ほぼゼロ）
+    tmpB === nothing && (tmpB = Matrix{ComplexF64}(undef, L, L))
+    w    === nothing && (w    = Vector{ComplexF64}(undef, L))
+    p    === nothing && (p    = Vector{ComplexF64}(undef, L))
+    q    === nothing && (q    = Vector{ComplexF64}(undef, L))
+
+    zero = ell + 1
+    ϕ = phi - pi/2
+    ψ = psi + pi/2
+
+    # w[M] = exp(-i*M*theta) を exp ではなく cis で（実数角なら速い）
+    @inbounds for i in 1:L
+        M = i - zero
+        w[i] = cis(-M * theta)
+    end
+
+    # tmpB = Diag(w) * d  （＝各行 i を w[i] 倍）
+    @inbounds for j in 1:L, i in 1:L
+        tmpB[i,j] = d[i,j] * w[i]
+    end
+
+    # result = transpose(d) * tmpB
+    # 注意: あなたの式は共役を取っていないので adjoint(d) ではなく transpose(d)
+    mul!(result, transpose(d), tmpB)
+
+    # p[m], q[n]
+    @inbounds for i in 1:L
+        m = i - zero
+        p[i] = cis(-m * ϕ)
+        q[i] = cis(-m * ψ)
+    end
+
+    # result[m,n] *= p[m] * q[n]
+    @inbounds for j in 1:L, i in 1:L
+        result[i,j] *= p[i] * q[j]
+    end
+
+    return result
+end
+
+# 互換：元と同じ返り値（ただし内部で result を確保）
+function WignerD_calculator_fast(d, ell, phi, theta, psi)
+    L = 2*ell + 1
+    result = Matrix{ComplexF64}(undef, L, L)
+    WignerD_calculator!(result, d, ell, phi, theta, psi)
+end
