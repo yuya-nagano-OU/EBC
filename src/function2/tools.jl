@@ -24,7 +24,7 @@ function unique_theta_num(num, nside)
         n = nside - 1
         start = 1/2*nside*(2*a1+(nside-1)*d) + 4*(n_2-1)*nside + 1
         stop = 1/2*nside*(2*a1+(nside-1)*d) + 4*(n_2)*nside
-    else
+    else 
         n_2 = 4nside-1 - num
         start = npix - 1/2*(n_2+1)*(2*a1+(n_2)*d) +1
         stop = npix - 1/2*(n_2)*(2*a1+(n_2-1)*d)
