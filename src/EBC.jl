@@ -1,4 +1,6 @@
 using WignerD
+using SparseArrays
+
 
 include("./function/convolver.jl")
 include("./function/mapmaker.jl")
