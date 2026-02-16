@@ -89,7 +89,7 @@ function blm_lrange(cb, cc)
 end
 
 
-function lmr_idx(; l::Int, m::Int, lstart::Int, mmax::Int)
+@inline function lmr_idx(; l::Int, m::Int, lstart::Int, mmax::Int)
     l ≥ lstart || throw(ArgumentError("l must be >= lstart"))
 
     mcap = min(l, mmax)
