@@ -139,6 +139,116 @@ function WignerD_calculator!(result::AbstractMatrix{ComplexF64},
     return result
 end
 
+function _WignerD_calculator_band!(result::AbstractMatrix{ComplexF64},
+                                   d, ell::Int, phi, theta, psi, nmax::Int;
+                                   tmpB=nothing, w=nothing, p=nothing, q=nothing)
+    L = 2*ell + 1
+    @assert size(d,1) == L && size(d,2) == L
+    @assert size(result,1) == L && size(result,2) == L
+    @assert 0 <= nmax <= ell
+
+    # Work arrays
+    tmpB === nothing && (tmpB = Matrix{ComplexF64}(undef, L, L))
+    w    === nothing && (w    = Vector{ComplexF64}(undef, L))
+    p    === nothing && (p    = Vector{ComplexF64}(undef, L))
+    q    === nothing && (q    = Vector{ComplexF64}(undef, L))
+
+    zero = ell + 1
+    ϕ = phi - pi/2
+    ψ = psi + pi/2
+
+    @inbounds for i in 1:L
+        M = i - zero
+        w[i] = cis(-M * theta)
+    end
+    @inbounds for j in 1:L, i in 1:L
+        tmpB[i,j] = d[i,j] * w[i]
+    end
+    @inbounds for i in 1:L
+        m = i - zero
+        p[i] = cis(-m * ϕ)
+        q[i] = cis(-m * ψ)
+    end
+
+    fill!(result, 0.0 + 0.0im)
+    i0 = zero - nmax
+    i1 = zero + nmax
+    @inbounds for j in i0:i1, i in i0:i1
+        acc = 0.0 + 0.0im
+        for k in 1:L
+            acc += d[k,i] * tmpB[k,j]
+        end
+        result[i,j] = acc * p[i] * q[j]
+    end
+
+    return result
+end
+
+# 複数角度サンプルの単純平均:
+#   D_eff = (1/N) * Σ_i D(phi[i], theta[i], psi[i])
+function WignerD_calculator!(result::AbstractMatrix{ComplexF64},
+                             d, ell::Int,
+                             phi::AbstractVector, theta::AbstractVector, psi::AbstractVector;
+                             tmpD=nothing,
+                             tmpB=nothing, w=nothing, p=nothing, q=nothing)
+    N = length(phi)
+    @assert length(theta) == N && length(psi) == N
+
+    L = 2*ell + 1
+    @assert size(result,1) == L && size(result,2) == L
+    tmpD === nothing && (tmpD = Matrix{ComplexF64}(undef, L, L))
+
+    fill!(result, 0.0 + 0.0im)
+    @inbounds for i in eachindex(phi)
+        WignerD_calculator!(tmpD, d, ell, phi[i], theta[i], psi[i];
+                            tmpB=tmpB, w=w, p=p, q=q)
+        result .+= tmpD
+    end
+    result ./= N
+    return result
+end
+
+# 2step 平均（effective_wignerD 相当）:
+#   D_eff = (1/N) * Σ_i D(phi_pix, theta_pix, 0) * D(α_i, β_i, γ_i)
+#   where (α_i, β_i, γ_i) = check_split(phi_pix, theta_pix, dphi_i, dtheta_i, psi_i)
+function WignerD_calculator!(result::AbstractMatrix{ComplexF64},
+                             d, ell::Int,
+                             phi::AbstractVector, theta::AbstractVector, psi::AbstractVector,
+                             phi_pix, theta_pix;
+                             eps=1e-12,
+                             nmax=ell,
+                             D1=nothing, D2=nothing, tmpMul=nothing,
+                             tmpB1=nothing, w1=nothing, p1=nothing, q1=nothing,
+                             tmpB2=nothing, w2=nothing, p2=nothing, q2=nothing)
+    N = length(phi)
+    @assert length(theta) == N && length(psi) == N
+
+    L = 2*ell + 1
+    @assert size(result,1) == L && size(result,2) == L
+    D1     === nothing && (D1     = Matrix{ComplexF64}(undef, L, L))
+    D2     === nothing && (D2     = Matrix{ComplexF64}(undef, L, L))
+    tmpMul === nothing && (tmpMul = Matrix{ComplexF64}(undef, L, L))
+
+    # 1st step: pixel center fixed rotation
+    WignerD_calculator!(D1, d, ell, phi_pix, theta_pix, 0.0;
+                        tmpB=tmpB1, w=w1, p=p1, q=q1)
+
+    fill!(result, 0.0 + 0.0im)
+    @inbounds for i in eachindex(phi)
+        dphi = phi[i] - phi_pix
+        dtheta = theta[i] - theta_pix
+        _, (α, β, γ) = check_split(phi_pix, theta_pix, dphi, dtheta, psi[i]; eps=eps)
+
+        _WignerD_calculator_band!(D2, d, ell, α, β, γ, nmax;
+                                  tmpB=tmpB2, w=w2, p=p2, q=q2)
+        mul!(tmpMul, D1, D2)
+        result .+= tmpMul
+    end
+
+    result ./= N
+    return result
+end
+
 # 互換：元と同じ返り値（ただし内部で result を確保）
 function WignerD_calculator_fast(d, ell, phi, theta, psi)
     L = 2*ell + 1
