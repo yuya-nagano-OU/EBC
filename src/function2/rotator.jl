@@ -255,3 +255,61 @@ function WignerD_calculator_fast(d, ell, phi, theta, psi)
     result = Matrix{ComplexF64}(undef, L, L)
     WignerD_calculator!(result, d, ell, phi, theta, psi)
 end
+
+
+# d_beam の l-ブロック( m,n in [-min(l,mmax), min(l,mmax)] )だけを埋める
+function fill_wignerD_band_block!(d_beam::AbstractMatrix{ComplexF64},
+                                  l::Int, phi, theta, psi;
+                                  lstart::Int, mmax::Int)
+    mcap = min(l, mmax)
+    ms = collect(-mcap:mcap)
+    idxs = [lmr_idx(l=l, m=m, lstart=lstart, mmax=mmax) for m in ms]
+
+    @inbounds for (ii, m) in enumerate(ms)
+        irow = idxs[ii]
+        for (jj, n) in enumerate(ms)
+            icol = idxs[jj]
+            d_beam[irow, icol] = WignerD.wignerDjmn(l, m, n, phi, theta, psi)
+        end
+    end
+    return d_beam
+end
+
+
+# 同じ l に対して複数角度サンプルの平均を d_beam の l-ブロックに書き込む
+function fill_wignerD_band_block_avg!(d_beam::AbstractMatrix{ComplexF64},
+                                      l::Int,
+                                      phis::AbstractVector, thetas::AbstractVector, psis::AbstractVector;
+                                      lstart::Int, mmax::Int)
+    N = length(phis)
+    @assert length(thetas) == N && length(psis) == N
+
+    mcap = min(l, mmax)
+    ms = collect(-mcap:mcap)
+    idxs = [lmr_idx(l=l, m=m, lstart=lstart, mmax=mmax) for m in ms]
+
+    # 対象ブロックをゼロ初期化
+    @inbounds for i in idxs, j in idxs
+        d_beam[i, j] = 0.0 + 0.0im
+    end
+
+    @inbounds for k in eachindex(phis)
+        ϕ = phis[k]
+        θ = thetas[k]
+        ψ = psis[k]
+        for (ii, m) in enumerate(ms)
+            irow = idxs[ii]
+            for (jj, n) in enumerate(ms)
+                icol = idxs[jj]
+                d_beam[irow, icol] += WignerD.wignerDjmn(l, m, n, ϕ, θ, ψ)
+            end
+        end
+    end
+
+    invN = 1.0 / N
+    @inbounds for i in idxs, j in idxs
+        d_beam[i, j] *= invN
+    end
+
+    return d_beam
+end
