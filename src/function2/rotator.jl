@@ -257,6 +257,41 @@ function WignerD_calculator_fast(d, ell, phi, theta, psi)
 end
 
 
+function local_effective_wignerD(cb, cc, α, β, γ)
+    n_beam = sum(2*min(l, cb.mmax) + 1 for l in cc.lstart:cc.lstop)
+    n_sky = sum(2*l + 1 for l in cc.lstart:cc.lstop)
+    D_beam = spzeros(ComplexF64, n_sky, n_beam)
+    @inbounds for l in cc.lstart:cc.lstop
+        n_ = min(l, cb.mmax)
+        @inbounds for i in eachindex(α)
+            @inbounds for m in -l:l
+                m_idx = lmr_idx(l=l, m=m, lstart=cc.lstart, mmax=cc.lstop)
+                @inbounds for n in -n_:n_
+                    n_idx = lmr_idx(l=l, m=n, lstart=cc.lstart, mmax=cb.mmax)
+                    D_beam[m_idx, n_idx] += WignerD.wignerDjmn(l, m, n, α[i], β[i], γ[i])
+                end
+            end
+        end
+    end
+    return D_beam./length(α)
+end
+
+function global_wignerD(cc, φ, θ, ψ)
+    n_sky = sum(2*l + 1 for l in cc.lstart:cc.lstop)
+    D_beam = spzeros(ComplexF64, n_sky, n_sky)
+    for l in cc.lstart:cc.lstop
+        m_ = l
+        @inbounds for m in -m_:m_
+            m_idx = lmr_idx(l=l, m=m, lstart=cc.lstart, mmax=cc.lstop)
+            @inbounds for n in -m_:m_
+                n_idx = lmr_idx(l=l, m=n, lstart=cc.lstart, mmax=cc.lstop)
+                D_beam[m_idx, n_idx] = WignerD.wignerDjmn(l, m, n, φ, θ, ψ)
+            end
+        end
+    end
+    return D_beam
+end
+
 # d_beam の l-ブロック( m,n in [-min(l,mmax), min(l,mmax)] )だけを埋める
 function fill_wignerD_band_block!(d_beam::AbstractMatrix{ComplexF64},
                                   l::Int, phi, theta, psi;
