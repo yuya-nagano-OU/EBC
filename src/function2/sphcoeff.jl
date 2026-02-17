@@ -103,7 +103,7 @@ end
     return offset + (m + mcap) + 1
 end
 
-function alm_idx(; l::Integer, m::Integer, lmax::Integer, mmax::Integer=lmax)
+@inline function alm_idx(; l::Integer, m::Integer, lmax::Integer, mmax::Integer=lmax)
     (0 ≤ m ≤ mmax) || throw(ArgumentError("m must be in [0, mmax]"))
     (m ≤ l ≤ lmax) || throw(ArgumentError("l must satisfy m ≤ l ≤ lmax"))
 
