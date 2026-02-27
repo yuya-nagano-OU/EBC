@@ -21,7 +21,7 @@ export alm_idx, for_healpy_order, unique_theta_num, unique_theta_val, store_wign
 
 # rotator
 include("./function2/rotator.jl")
-export WignerD_calculator!, WignerD_calculator_fast
+export WignerD_calculator!, WignerD_calculator_fast, global_wignerD, local_effective_wignerD 
 include("./function2/wignerd.jl")
 export wignerd_mdown_from_l
 

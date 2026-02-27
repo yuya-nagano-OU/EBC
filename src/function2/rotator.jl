@@ -348,3 +348,49 @@ function fill_wignerD_band_block_avg!(d_beam::AbstractMatrix{ComplexF64},
 
     return d_beam
 end
+
+
+@inline pm(m::Int, n::Int) = isodd(m - n) ? -1.0 : 1.0
+
+
+function local_effective_wignerD_conj_reduced(cb, cc, α, β, γ; τ::Int=5)
+    n_beam = sum(2*min(l, cb.mmax) + 1 for l in cc.lstart:cc.lstop)
+    n_sky = sum(2*l + 1 for l in cc.lstart:cc.lstop)
+    D_beam = spzeros(ComplexF64, n_sky, n_beam)
+    @inbounds for l in cc.lstart:cc.lstop
+        n_ = min(l, cb.mmax)
+        @inbounds for i in eachindex(α)
+            @inbounds for m in -l:l
+                m_idx = lmr_idx(l=l, m=m, lstart=cc.lstart, mmax=cc.lstop)
+                # ★帯制限：|m-n| <= τ だけ回す
+                n_lo = max(-n_, m - τ)
+                n_hi = min( n_, m + τ)
+                #@show n_lo, n_hi, n_
+                @inbounds for n in n_lo:n_hi
+                    sgn = pm(m, n)
+                    n_idx = lmr_idx(l=l, m=n, lstart=cc.lstart, mmax=cb.mmax)
+                    D_beam[m_idx, n_idx] += sgn * WignerD.wignerDjmn(l, -m, -n, α[i], β[i], γ[i])
+                end
+            end
+        end
+    end
+    return D_beam./length(α)
+end
+
+
+function global_wignerD_conj(cc, φ, θ, ψ)
+    n_sky = sum(2*l + 1 for l in cc.lstart:cc.lstop)
+    D_beam = spzeros(ComplexF64, n_sky, n_sky)
+    for l in cc.lstart:cc.lstop
+        m_ = l
+        @inbounds for m in -m_:m_
+            m_idx = lmr_idx(l=l, m=m, lstart=cc.lstart, mmax=cc.lstop)
+            @inbounds for n in -m_:m_
+                sgn = pm(m, n)
+                n_idx = lmr_idx(l=l, m=n, lstart=cc.lstart, mmax=cc.lstop)
+                D_beam[m_idx, n_idx] = sgn * WignerD.wignerDjmn(l, -m, -n, φ, θ, ψ)
+            end
+        end
+    end
+    return D_beam
+end

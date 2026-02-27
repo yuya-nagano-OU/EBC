@@ -18,27 +18,27 @@ end
 
 function alm_lrange(cs, cc)
     n = sum(2*l + 1 for l in cc.lstart:cc.lstop)
-    alm_calc = Matrix{ComplexF64}(undef, n, 3)
+    alm_calc = Matrix{ComplexF64}(undef,  3, n)
     for l in cc.lstart:cc.lstop
         m = 0
         idx_in = alm_idx(l=l, m=m, lmax=cs.lmax)
         idx_out= lmr_idx(l=l, m=m, lstart=cc.lstart, mmax=cs.lmax)
-        alm_calc[idx_out,1] = cs.alm[idx_in,1]
-        alm_calc[idx_out,2] = cs.alm[idx_in,2]
-        alm_calc[idx_out,3] = cs.alm[idx_in,3]
+        alm_calc[1,idx_out] = cs.alm[idx_in,1]
+        alm_calc[2,idx_out] = -(cs.alm[idx_in,2] + 1im*cs.alm[idx_in,3])
+        alm_calc[3,idx_out] = -(cs.alm[idx_in,2] - 1im*cs.alm[idx_in,3])
         for m in 1:l
             phase = isodd(m) ? -1.0 : 1.0
             idx_in = alm_idx(l=l, m=m, lmax=cs.lmax)
             idx_out_positive= lmr_idx(l=l, m=m, lstart=cc.lstart, mmax=cs.lmax)
             idx_out_negative= lmr_idx(l=l, m=-m, lstart=cc.lstart, mmax=cs.lmax)
             # m positive
-            alm_calc[idx_out_positive,1] = cs.alm[idx_in,1]                           # spin0
-            alm_calc[idx_out_positive,2] = -(cs.alm[idx_in,2] + 1im*cs.alm[idx_in,3]) # spin2 = -(E +iB)
-            alm_calc[idx_out_positive,3] = -(cs.alm[idx_in,2] - 1im*cs.alm[idx_in,3]) # spin2 = -(E +iB)
+            alm_calc[1,idx_out_positive] = cs.alm[idx_in,1]                           # spin0
+            alm_calc[2,idx_out_positive] = -(cs.alm[idx_in,2] + 1im*cs.alm[idx_in,3]) # spin2 = -(E +iB)
+            alm_calc[3,idx_out_positive] = -(cs.alm[idx_in,2] - 1im*cs.alm[idx_in,3]) # spin2 = -(E +iB)
             # m negative
-            alm_calc[idx_out_negative,1] = conj(cs.alm[idx_in,1])*phase             # conj(spin0)
-            alm_calc[idx_out_negative,2] = conj(alm_calc[idx_out_positive,3])*phase # conj(spin2)*(-1)^m
-            alm_calc[idx_out_negative,3] = conj(alm_calc[idx_out_positive,2])*phase # conj(spin-2)*(-1)^m
+            alm_calc[1,idx_out_negative] = conj(cs.alm[idx_in,1])*phase             # conj(spin0)
+            alm_calc[2,idx_out_negative] = conj(alm_calc[3,idx_out_positive])*phase # conj(spin2)*(-1)^m
+            alm_calc[3,idx_out_negative] = conj(alm_calc[2,idx_out_positive])*phase # conj(spin-2)*(-1)^m
         end
     end
     return alm_calc
@@ -85,7 +85,7 @@ function blm_lrange(cb, cc)
             blm_calc[idx_out_negative,3] = conj(blm_calc[idx_out_positive,2])*phase # conj(spin2)*(-1)^m 
         end
     end
-    return blm_calc
+    return conj.(blm_calc)
 end
 
 
