@@ -352,6 +352,25 @@ end
 
 @inline pm(m::Int, n::Int) = isodd(m - n) ? -1.0 : 1.0
 
+function local_effective_wignerD_conj(cb, cc, α, β, γ)
+    n_beam = sum(2*min(l, cb.mmax) + 1 for l in cc.lstart:cc.lstop)
+    n_sky = sum(2*l + 1 for l in cc.lstart:cc.lstop)
+    D_beam = spzeros(ComplexF64, n_sky, n_beam)
+    @inbounds for l in cc.lstart:cc.lstop
+        n_ = min(l, cb.mmax)
+        @inbounds for i in eachindex(α)
+            @inbounds for m in -l:l
+                m_idx = lmr_idx(l=l, m=m, lstart=cc.lstart, mmax=cc.lstop)
+                @inbounds for n in -n_:n_
+                    sgn = pm(m, n)
+                    n_idx = lmr_idx(l=l, m=n, lstart=cc.lstart, mmax=cb.mmax)
+                    D_beam[m_idx, n_idx] += sgn * WignerD.wignerDjmn(l, -m, -n, α[i], β[i], γ[i])
+                end
+            end
+        end
+    end
+    return D_beam./length(α)
+end
 
 function local_effective_wignerD_conj_reduced(cb, cc, α, β, γ; τ::Int=5)
     n_beam = sum(2*min(l, cb.mmax) + 1 for l in cc.lstart:cc.lstop)
@@ -393,4 +412,18 @@ function global_wignerD_conj(cc, φ, θ, ψ)
         end
     end
     return D_beam
+end
+
+
+function calc_local_euiler_angles(res, pix_idx, φ, θ, ψ)
+    alphas = zeros(size(θ))
+    betas = zeros(size(θ))
+    gammas = zeros(size(θ))
+    θ_pix,φ_pix = Healpix.pix2angRing(res, pix_idx)
+    dθ = θ .- θ_pix
+    dφ = φ .- φ_pix
+    for i in eachindex(θ)
+        err, (alphas[i], betas[i], gammas[i]) = check_split(φ_pix, θ_pix, dφ[i], dθ[i], ψ[i])
+    end
+    return alphas, betas, gammas
 end
