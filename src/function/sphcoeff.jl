@@ -11,12 +11,12 @@ function ConvolutionSky(;
 )
     ncoeff = alm_idx(lmax = lmax, mmax = lmax, l=lmax, m=lmax)
     alm_arr = isnothing(alm) ?
-        fill(1.0 + 1.0im, 3, ncoeff, numofsky) :
+        fill(1.0 + 1.0im, numofsky, 3, ncoeff) :
         alm
 
-    size(alm_arr, 1) == 3 || throw(ArgumentError("alm first axis must be 3"))
-    size(alm_arr, 2) == ncoeff || throw(ArgumentError("alm second axis must be Nalm=$ncoeff"))
-    size(alm_arr, 3) == numofsky || throw(ArgumentError("alm third axis must match numofsky=$numofsky"))
+    size(alm_arr, 1) == numofsky || throw(ArgumentError("alm first axis must be 3"))
+    size(alm_arr, 2) == 3 || throw(ArgumentError("alm second axis must be Nalm=$ncoeff"))
+    size(alm_arr, 3) == ncoeff || throw(ArgumentError("alm third axis must match numofsky=$numofsky"))
 
     return ConvolutionSky(numofsky, lmax, alm_arr)
 end
@@ -24,16 +24,16 @@ end
 function slice_spin_alm_by_l(cs, cc)
     #n = alm_idx(lmax = cs.lmax, mmax = cs.lmax, l=cs.lmax, m=cs.lmax)
     n = sum(2*l + 1 for l in cc.lstart:cc.lstop)
-    alm_calc = Array{ComplexF64,3}(undef, n, 3, cs.numofsky)
+    alm_calc = Array{ComplexF64,3}(undef, cs.numofsky, 3, n)
 
     for i in 1:cs.numofsky
         for l in cc.lstart:cc.lstop
             m = 0
             idx_in = alm_idx(l=l, m=m, lmax=cs.lmax)
             idx_out = lmr_idx(l=l, m=m, lstart=cc.lstart, mmax=cs.lmax)
-            alm_calc[idx_out, 1, i] = cs.alm[1, idx_in, i] # spin0
-            alm_calc[idx_out, 2, i] = -(cs.alm[2, idx_in, i] + 1im*cs.alm[3, idx_in, i])
-            alm_calc[idx_out, 3, i] = -(cs.alm[2, idx_in, i] - 1im*cs.alm[3, idx_in, i])
+            alm_calc[i, 1, idx_out] = cs.alm[i, 1, idx_in] # spin0
+            alm_calc[i, 2, idx_out] = -(cs.alm[i, 2, idx_in] + 1im*cs.alm[i, 3, idx_in])
+            alm_calc[i, 3, idx_out] = -(cs.alm[i, 2, idx_in] - 1im*cs.alm[i, 3, idx_in])
 
             for m in 1:l
                 phase = isodd(m) ? -1.0 : 1.0
@@ -41,13 +41,13 @@ function slice_spin_alm_by_l(cs, cc)
                 idx_out_positive = lmr_idx(l=l, m=m, lstart=cc.lstart, mmax=cs.lmax)
                 idx_out_negative = lmr_idx(l=l, m=-m, lstart=cc.lstart, mmax=cs.lmax)
                 # m positive
-                alm_calc[idx_out_positive, 1, i] = cs.alm[1, idx_in, i]                               # spin0
-                alm_calc[idx_out_positive, 2, i] = -(cs.alm[2, idx_in, i] + 1im*cs.alm[3, idx_in, i]) # spin2 = -(E +iB)
-                alm_calc[idx_out_positive, 3, i] = -(cs.alm[2, idx_in, i] - 1im*cs.alm[3, idx_in, i]) # spin2 = -(E +iB)
+                alm_calc[i, 1, idx_out_positive] = cs.alm[i, 1, idx_in]                               # spin0
+                alm_calc[i, 2, idx_out_positive] = -(cs.alm[i, 2, idx_in] + 1im*cs.alm[i, 3, idx_in]) # spin2 = -(E +iB)
+                alm_calc[i, 3, idx_out_positive] = -(cs.alm[i, 2, idx_in] - 1im*cs.alm[i, 3, idx_in]) # spin2 = -(E +iB)
                 # m negative
-                alm_calc[idx_out_negative, 1, i] = conj(cs.alm[1, idx_in, i])*phase              # conj(spin0)
-                alm_calc[idx_out_negative, 2, i] = conj(alm_calc[idx_out_positive, 3, i])*phase   # conj(spin2)*(-1)^m
-                alm_calc[idx_out_negative, 3, i] = conj(alm_calc[idx_out_positive, 2, i])*phase   # conj(spin-2)*(-1)^m
+                alm_calc[i, 1, idx_out_negative] = conj(cs.alm[i, 1, idx_in])*phase              # conj(spin0)
+                alm_calc[i, 2, idx_out_negative] = conj(alm_calc[i, 3, idx_out_positive])*phase   # conj(spin2)*(-1)^m
+                alm_calc[i, 3, idx_out_negative] = conj(alm_calc[i, 2, idx_out_positive])*phase   # conj(spin-2)*(-1)^m
             end
         end
     end

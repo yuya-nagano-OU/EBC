@@ -396,6 +396,68 @@ function local_effective_wignerD_conj_reduced(cb, cc, α, β, γ; τ::Int=5)
     return D_beam./length(α)
 end
 
+function local_effective_wignerD_conj_reduced_moments(cb, cc, α, β, γ, ψ; τ::Int=5)
+    N = length(α)
+    length(β) == N || throw(ArgumentError("β must have the same length as α"))
+    length(γ) == N || throw(ArgumentError("γ must have the same length as α"))
+    length(ψ) == N || throw(ArgumentError("ψ must have the same length as α"))
+
+    n_beam = sum(2*min(l, cb.mmax) + 1 for l in cc.lstart:cc.lstop)
+    n_sky = sum(2*l + 1 for l in cc.lstart:cc.lstop)
+
+    phase_p2 = cis.(2.0 .* ψ)
+    phase_m2 = conj.(phase_p2)
+    invN = 1.0 / N
+
+    I = Int[]
+    J = Int[]
+    V0 = ComplexF64[]
+    Vp = ComplexF64[]
+    Vm = ComplexF64[]
+
+    nnz_hint = 0
+    @inbounds for l in cc.lstart:cc.lstop
+        n_ = min(l, cb.mmax)
+        nnz_hint += (2*l + 1) * (2*min(n_, τ) + 1)
+    end
+    sizehint!(I, nnz_hint)
+    sizehint!(J, nnz_hint)
+    sizehint!(V0, nnz_hint)
+    sizehint!(Vp, nnz_hint)
+    sizehint!(Vm, nnz_hint)
+
+    @inbounds for l in cc.lstart:cc.lstop
+        n_ = min(l, cb.mmax)
+        for m in -l:l
+            m_idx = lmr_idx(l=l, m=m, lstart=cc.lstart, mmax=cc.lstop)
+            n_lo = max(-n_, m - τ)
+            n_hi = min(n_, m + τ)
+            for n in n_lo:n_hi
+                n_idx = lmr_idx(l=l, m=n, lstart=cc.lstart, mmax=cb.mmax)
+                sgn = pm(m, n)
+                s0 = 0.0 + 0.0im
+                sp = 0.0 + 0.0im
+                sm = 0.0 + 0.0im
+                for i in eachindex(α)
+                    v = sgn * WignerD.wignerDjmn(l, -m, -n, α[i], β[i], γ[i])
+                    s0 += v
+                    sp += v * phase_p2[i]
+                    sm += v * phase_m2[i]
+                end
+                push!(I, m_idx); push!(J, n_idx)
+                push!(V0, s0 * invN)
+                push!(Vp, sp * invN)
+                push!(Vm, sm * invN)
+            end
+        end
+    end
+
+    D0 = sparse(I, J, V0, n_sky, n_beam)
+    Dp2 = sparse(I, J, Vp, n_sky, n_beam)
+    Dm2 = sparse(I, J, Vm, n_sky, n_beam)
+    return D0, Dp2, Dm2
+end
+
 
 function global_wignerD_conj(cc, φ, θ, ψ)
     n_sky = sum(2*l + 1 for l in cc.lstart:cc.lstop)

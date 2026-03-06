@@ -5,6 +5,25 @@ using StaticArrays
 using Healpix
 
 
+include("./function/convolution.jl")
+include("./function/sphcoeff.jl")
+include("./function/rotator.jl")
+include("./function/tools.jl")
+
+
+export ConvolutionSky, ConvolutionBeam
+export alm_idx
+export slice_spin_alm_by_l
+export slice_spin_blm_by_l
+
+export ConvolutionCalculate
+export convolver_1pixel, compute_pixel_convolution
+
+export local_effective_wignerD_conj_reduced_formapmake
+export global_wignerD_conj
+export calc_local_euiler_angles
+
+#=
 include("./function/convolver.jl")
 include("./function/mapmaker.jl")
 include("./function/rotaters.jl")
@@ -35,5 +54,5 @@ export lmr_idx, alm_idx
 #convolution
 include("./function2/convolution.jl")
 export ConvolutionCalculate
-
+=#
 
