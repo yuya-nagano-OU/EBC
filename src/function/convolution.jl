@@ -48,3 +48,11 @@ function compute_pixel_convolution(pix_idx, globalD, φ, θ, ψ; τ=5)
     result = convolver_1pixel(cs, cb, cc, alm_slice, blm_slice, globalD, localD)
     return result
 end
+
+function compute_pixel_convolution_mapmake(cs,cb,cc,pix_idx, globalD, φ, θ, ψ; τ=5)
+    α_local, β_local, γ_local = calc_local_euiler_angles(cc.resol, pix_idx, φ, θ, ψ)
+    localD = local_effective_wignerD_conj_reduced_formapmake(cb, cc, α_local, β_local, γ_local, ψ, τ=τ)
+    convolved_date = convolver_1pixel(cs, cb, cc, alm_slice, blm_slice, globalD, localD)
+    result = mapmake(convolved_date, ψ)
+    return result
+end

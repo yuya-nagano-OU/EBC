@@ -179,6 +179,9 @@ function calc_local_euiler_angles(res, pix_idx, φ, θ, ψ)
     dφ = φ .- φ_pix
     for i in eachindex(θ)
         err, (alphas[i], betas[i], gammas[i]) = check_split(φ_pix, θ_pix, dφ[i], dθ[i], ψ[i])
+        if err > 1e-6
+            @warn "Large error in Euler angle splitting: $err at index $i (dφ=$(dφ[i]), dθ=$(dθ[i]), ψ=$(ψ[i]))"
+        end
     end
     return alphas, betas, gammas
 end
@@ -194,7 +197,7 @@ function local_effective_wignerD_conj_reduced_formapmake(cb, cc, α, β, γ, ψ;
         n_ = min(l, cb.mmax)
         @inbounds for i in eachindex(α)
             phase = exp(2im*ψ[i])
-            phase2 = exp(4im*ψ[i])
+            #phase2 = exp(4im*ψ[i])
             @inbounds for m in -l:l
                 m_idx = lmr_idx(l=l, m=m, lstart=cc.lstart, mmax=cc.lstop)
                 # ★帯制限：|m-n| <= τ だけ回す
