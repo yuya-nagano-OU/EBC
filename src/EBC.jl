@@ -10,18 +10,23 @@ include("./function/sphcoeff.jl")
 include("./function/rotator.jl")
 include("./function/tools.jl")
 
-
+#sphcoeff.jl
 export ConvolutionSky, ConvolutionBeam
 export alm_idx
 export slice_spin_alm_by_l
 export slice_spin_blm_by_l
 
+#convolution.jl
 export ConvolutionCalculate
 export convolver_1pixel, compute_pixel_convolution
 
+#rotator.jl
 export local_effective_wignerD_conj_reduced_formapmake
 export global_wignerD_conj
 export calc_local_euiler_angles
+
+#tools.jl
+export ring_pixel_range, pixels_in_ring, first_pixel_in_ring, unique_theta_val
 
 #=
 include("./function/convolver.jl")
