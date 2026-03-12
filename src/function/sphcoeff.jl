@@ -1,7 +1,7 @@
 mutable struct ConvolutionSky{I<:Int, AC<:Array{ComplexF64,3}}
     numofsky::I
     lmax::I
-    alm::AC   # (Nalm, 3, Nsky)
+    alm::AC   # (Nsky, 3, Nalm)
 end
 
 function ConvolutionSky(;
@@ -54,7 +54,7 @@ function slice_spin_alm_by_l(cs, cc)
 
     return alm_calc
 end
-
+#=
 function slice_spin_alm_by_l(cs, cc,numofsky)
     n = alm_idx(lmax = cs.lmax, mmax = cs.lmax, l=cs.lmax, m=cs.lmax)
     alm_calc = Matrix{ComplexF64}(undef, n, 3, )
@@ -86,6 +86,7 @@ function slice_spin_alm_by_l(cs, cc,numofsky)
 
     return alm_calc
 end
+=#
 
 mutable struct ConvolutionBeam{I<:Int, AC<:Array{ComplexF64,3}}
     numofbeams::I

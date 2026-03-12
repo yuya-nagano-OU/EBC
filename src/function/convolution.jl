@@ -53,11 +53,11 @@ function compute_pixel_convolution_mapmake(cs,cb,cc, alm_slice, blm_slice,pix_id
     α_local, β_local, γ_local = calc_local_euiler_angles(cc.resol, pix_idx, φ, θ, ψ)
     localD = local_effective_wignerD_conj_reduced_formapmake(cb, cc, α_local, β_local, γ_local, ψ, τ=τ)
     convolved_date = convolver_1pixel(cs, cb, cc, alm_slice, blm_slice, globalD, localD)
-    result = mapmake(convolved_date, ψ)
+    result = mapmake(cs, cb, convolved_date, ψ)
     return result
 end
 
-@inline function mapmake(convolved_date, ψ)
+@inline function mapmake(cs, cb, convolved_date, ψ)
     result =  similar(convolved_date, Float64)
     h2 = mean(exp.(2im*ψ))
     h4 = mean(exp.(4im*ψ))
