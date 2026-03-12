@@ -122,6 +122,38 @@ function global_wignerD_conj(cc, φ, θ, ψ)
     return D_beam
 end
 
+function global_wignerd(cc, θ)
+    n_sky = sum(2*l + 1 for l in cc.lstart:cc.lstop)
+    D_beam = spzeros(ComplexF64, n_sky, n_sky)
+    for l in cc.lstart:cc.lstop
+        m_ = l
+        @inbounds for m in -m_:m_
+            m_idx = lmr_idx(l=l, m=m, lstart=cc.lstart, mmax=cc.lstop)
+            @inbounds for n in -m_:m_
+                n_idx = lmr_idx(l=l, m=n, lstart=cc.lstart, mmax=cc.lstop)
+                D_beam[m_idx, n_idx] = WignerD.wignerdjmn(l, m, n, θ)
+            end
+        end
+    end
+    return D_beam
+end
+
+function global_d2D_conj(cc, gwd, φ)
+    n_sky = sum(2l + 1 for l in cc.lstart:cc.lstop)
+    D_beam = spzeros(ComplexF64, n_sky, n_sky)
+    for l in cc.lstart:cc.lstop
+        @inbounds for m in -l:l
+            m_idx = lmr_idx(l=l, m=m, lstart=cc.lstart, mmax=cc.lstop)
+            phase = cis(m * φ)   # exp(im*m*φ) より普通はこれが軽い
+            @inbounds for n in -l:l
+                n_idx = lmr_idx(l=l, m=n, lstart=cc.lstart, mmax=cc.lstop)
+                D_beam[m_idx, n_idx] = gwd[m_idx, n_idx] * phase
+            end
+        end
+    end
+    return D_beam
+end
+
 @inline pm(m::Int, n::Int) = isodd(m - n) ? -1.0 : 1.0
 
 function local_effective_wignerD_conj(cb, cc, α, β, γ)

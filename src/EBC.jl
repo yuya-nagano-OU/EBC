@@ -24,9 +24,11 @@ export convolver_1pixel, compute_pixel_convolution
 export local_effective_wignerD_conj_reduced_formapmake
 export global_wignerD_conj
 export calc_local_euiler_angles
+export global_wignerd, global_d2D_conj
 
 #tools.jl
 export ring_pixel_range, pixels_in_ring, first_pixel_in_ring, unique_theta_val
+export build_index_dict
 
 #=
 include("./function/convolver.jl")

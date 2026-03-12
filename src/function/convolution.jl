@@ -42,17 +42,36 @@ function convolver_1pixel(cs, cb, cc, alm_slice, blm_slice, globalD, localD)
     return result
 end
 
-function compute_pixel_convolution(pix_idx, globalD, φ, θ, ψ; τ=5)
+function compute_pixel_convolution(alm_slice, blm_slice, pix_idx, globalD, φ, θ, ψ; τ=5)
     α_local, β_local, γ_local = calc_local_euiler_angles(cc.resol, pix_idx, φ, θ, ψ)
     localD = local_effective_wignerD_conj_reduced_formapmake(cb, cc, α_local, β_local, γ_local, ψ, τ=τ)
     result = convolver_1pixel(cs, cb, cc, alm_slice, blm_slice, globalD, localD)
     return result
 end
 
-function compute_pixel_convolution_mapmake(cs,cb,cc,pix_idx, globalD, φ, θ, ψ; τ=5)
+function compute_pixel_convolution_mapmake(cs,cb,cc, alm_slice, blm_slice,pix_idx, globalD, φ, θ, ψ; τ=5)
     α_local, β_local, γ_local = calc_local_euiler_angles(cc.resol, pix_idx, φ, θ, ψ)
     localD = local_effective_wignerD_conj_reduced_formapmake(cb, cc, α_local, β_local, γ_local, ψ, τ=τ)
     convolved_date = convolver_1pixel(cs, cb, cc, alm_slice, blm_slice, globalD, localD)
     result = mapmake(convolved_date, ψ)
+    return result
+end
+
+@inline function mapmake(convolved_date, ψ)
+    result =  similar(convolved_date, Float64)
+    h2 = mean(exp.(2im*ψ))
+    h4 = mean(exp.(4im*ψ))
+    M = [1.0 conj(h2)/2 h2/2;
+        h2/2 1/4 (h4)/4;
+        conj(h2)/2 conj(h4)/4 1/4]
+    for i in 1:cs.numofsky
+        for j in 1:cb.numofbeams
+            d_array = [convolved_date[i,j,1]; convolved_date[i,j,2]/2; convolved_date[i,j,3]/2]
+            temp = inv(M)* d_array
+            result[i,j,1] = real(temp[1])
+            result[i,j,2] = real(temp[2])
+            result[i,j,3] = imag(temp[2])
+        end
+    end
     return result
 end

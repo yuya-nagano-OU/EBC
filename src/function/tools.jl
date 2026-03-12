@@ -53,6 +53,13 @@ function first_pixel_in_ring(ring::Int, nside::Int)
     end
 end
 
+function build_index_dict(pixels::AbstractVector{Int})
+    index_dict = Dict{Int, Vector{Int}}()
+    for (i, pix) in enumerate(pixels)
+        push!(get!(index_dict, pix, Int[]), i)
+    end
+    return index_dict
+end
 
 function unique_theta_val(nside::Int)
     nrings = 4nside - 1
@@ -71,6 +78,19 @@ function unique_theta_val(nside::Int)
     end
 
     return θ
+end
+
+function unique_theta_val(nring, nside::Int)
+    r = nring
+    z = if r <= nside
+        1 - r^2 / (3nside^2)
+    elseif r <= 3nside
+        (4/3) - (2r)/(3nside)
+    else
+        rr = 4nside - r
+        -1 + rr^2 / (3nside^2)
+    end
+    return acos(z)
 end
 
 function unique_theta_num(num, nside)
